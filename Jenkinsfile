@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    tools {
-        sonarScanner 'sonar-scanner'
-    }
-
     environment {
         DOCKER_IMAGE        = 'eshashamraiz2004/flask-app'
         DOCKER_TAG          = "${BUILD_NUMBER}"
@@ -25,7 +21,7 @@ pipeline {
             steps {
                 withSonarQubeEnv("${SONARQUBE_ENV}") {
                     sh '''
-                        ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
+                        sonar-scanner \
                         -Dsonar.projectKey=esha-flask-app \
                         -Dsonar.sources=. \
                         -Dsonar.host.url=http://localhost:9000
@@ -36,12 +32,8 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                withCredentials([
-                    string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')
-                ]) {
-                    timeout(time: 5, unit: 'MINUTES') {
-                        waitForQualityGate abortPipeline: true
-                    }
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }
@@ -67,8 +59,7 @@ pipeline {
         stage('Container Scan - Trivy') {
             steps {
                 sh '''
-                    trivy image \
-                    --severity HIGH,CRITICAL \
+                    trivy image --severity HIGH,CRITICAL \
                     ${DOCKER_IMAGE}:${DOCKER_TAG} || true
                 '''
             }
