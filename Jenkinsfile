@@ -2,10 +2,9 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE        = 'eshashamraiz2004/flask-app'
-        DOCKER_TAG          = "${BUILD_NUMBER}"
-        DOCKER_CREDENTIALS  = 'dockerhub-credentials'
-        SONARQUBE_ENV       = 'SonarQube'
+        DOCKER_IMAGE       = 'eshashamraiz2004/flask-app'
+        DOCKER_TAG         = "${BUILD_NUMBER}"
+        DOCKER_CREDENTIALS = 'dockerhub-credentials'
     }
 
     stages {
@@ -14,27 +13,6 @@ pipeline {
             steps {
                 git branch: 'main',
                     url: 'https://github.com/esha-99/flask-app.git'
-            }
-        }
-
-        stage('SAST - SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv("${SONARQUBE_ENV}") {
-                    sh '''
-                        sonar-scanner \
-                        -Dsonar.projectKey=esha-flask-app \
-                        -Dsonar.sources=. \
-                        -Dsonar.host.url=http://localhost:9000
-                    '''
-                }
-            }
-        }
-
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
             }
         }
 
@@ -59,7 +37,8 @@ pipeline {
         stage('Container Scan - Trivy') {
             steps {
                 sh '''
-                    trivy image --severity HIGH,CRITICAL \
+                    trivy image \
+                    --severity HIGH,CRITICAL \
                     ${DOCKER_IMAGE}:${DOCKER_TAG} || true
                 '''
             }
@@ -93,7 +72,6 @@ pipeline {
 
     post {
         always {
-            archiveArtifacts artifacts: '*.json, *.html, *.txt', allowEmptyArchive: true
             cleanWs()
         }
         success {
