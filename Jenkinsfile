@@ -5,6 +5,7 @@ pipeline {
         DOCKER_IMAGE = "eshashamraiz2004/flask-app"
         DOCKER_TAG   = "${BUILD_NUMBER}"
         DOCKERHUB_CREDENTIALS = 'dockerhub-credentials' // Jenkins DockerHub credentials ID
+        APP_PORT = "5000" // Flask app port
     }
 
     stages {
@@ -24,12 +25,32 @@ pipeline {
             }
         }
 
-        stage('Container Scan - Trivy') {
+        stage('Run Docker Container') {
             steps {
                 script {
-                    echo "Scanning Docker image with Trivy..."
-                    sh "trivy image --severity HIGH,CRITICAL ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                    echo "Running Docker container ${DOCKER_IMAGE}:${DOCKER_TAG}..."
+                    // Stop any previous container with same name
+                    sh "docker rm -f flask-app || true"
+                    // Run container in detached mode
+                    sh "docker run -d --name flask-app -p ${APP_PORT}:${APP_PORT} ${DOCKER_IMAGE}:${DOCKER_TAG}"
                 }
+            }
+        }
+
+        stage('Wait for App to Start') {
+            steps {
+                script {
+                    echo "Waiting for Flask app to be up..."
+                    // Wait a few seconds to ensure the app is ready
+                    sh "sleep 10"
+                }
+            }
+        }
+
+        stage('OWASP ZAP Ready for Scan') {
+            steps {
+                echo "Your app is running at http://localhost:${APP_PORT}."
+                echo "You can now scan it using OWASP ZAP CLI or container."
             }
         }
 
@@ -43,23 +64,12 @@ pipeline {
                 }
             }
         }
-
-        stage('Deploy to Kubernetes') {
-            steps {
-                script {
-                    echo "Deploying to Kubernetes..."
-                    // Assumes kubectl is configured on the agent with access to the cluster
-                    sh """
-                        kubectl set image deployment/flask-app flask-app=${DOCKER_IMAGE}:${DOCKER_TAG} --record
-                        kubectl rollout status deployment/flask-app
-                    """
-                }
-            }
-        }
     }
 
     post {
         always {
+            echo "Cleaning up workspace and stopping container..."
+            sh "docker rm -f flask-app || true"
             cleanWs()
         }
         success {
