@@ -7,7 +7,6 @@ pipeline {
         DOCKER_CREDENTIALS = 'dockerhub-credentials'
         GITHUB_CREDENTIALS = 'github-credentials'
         SONARQUBE_ENV = 'SonarQube'
-        KUBECONFIG = credentials('kubeconfig')
     }
     
     stages {
@@ -98,7 +97,7 @@ pipeline {
             steps {
                 script {
                     sh """
-                        export KUBECONFIG=${KUBECONFIG}
+                        # Using default kubeconfig at ~/.kube/config
                         kubectl apply -f k8s/namespace.yaml
                         kubectl apply -f k8s/deployment.yaml
                         kubectl apply -f k8s/service.yaml
@@ -113,10 +112,7 @@ pipeline {
             steps {
                 script {
                     sh """
-                        # Get service URL
                         SERVICE_URL=\$(kubectl get svc flask-app-service -n flask-app -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-                        
-                        # Run ZAP baseline scan
                         docker run --rm \
                         -v \$(pwd):/zap/wrk/:rw \
                         -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
@@ -131,7 +127,6 @@ pipeline {
         stage('Kubernetes Security Scan') {
             steps {
                 sh """
-                    # Scan Kubernetes manifests
                     trivy config k8s/ --format json --output k8s-scan-report.json
                     trivy config k8s/
                 """
@@ -156,16 +151,16 @@ pipeline {
     
     post {
         always {
-            archiveArtifacts artifacts: '*.json, *.html, *.txt', allowEmptyArchive: true
-            cleanWs()
+            steps {
+                archiveArtifacts artifacts: '*.json, *.html, *.txt', allowEmptyArchive: true
+                cleanWs()
+            }
         }
         success {
             echo 'Pipeline executed successfully!'
-            // Add Slack/Email notification here
         }
         failure {
             echo 'Pipeline failed!'
-            // Add Slack/Email notification here
         }
     }
 }
