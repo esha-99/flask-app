@@ -5,8 +5,7 @@ pipeline {
         DOCKER_IMAGE = "eshashamraiz2004/flask-app"
         DOCKER_TAG   = "${BUILD_NUMBER}"
         DOCKERHUB_CREDENTIALS = 'dockerhub-credentials' // Jenkins DockerHub credentials ID
-        SONARQUBE_SERVER = 'SonarQube' // Jenkins SonarQube server ID (set in Jenkins configuration)
-        SONAR_TOKEN = credentials('sonar-token') // Add your SonarQube token as Jenkins credential
+        KUBE_CONFIG_CREDENTIALS = 'kubeconfig-credentials' // Add your kubeconfig as Jenkins secret file
     }
 
     stages {
@@ -14,21 +13,6 @@ pipeline {
             steps {
                 echo "Checking out code from Git..."
                 checkout scm
-            }
-        }
-
-        stage('SonarQube Scan') {
-            steps {
-                script {
-                    echo "Running SonarQube scan..."
-                    sh """
-                        sonar-scanner \
-                        -Dsonar.projectKey=flask-app \
-                        -Dsonar.sources=. \
-                        -Dsonar.host.url=http://18.216.252.43:9000 \
-                        -Dsonar.login=${SONAR_TOKEN}
-                    """
-                }
             }
         }
 
@@ -62,11 +46,18 @@ pipeline {
         }
 
         stage('Deploy to Kubernetes') {
-            when {
-                expression { false } // Skipped for now
-            }
             steps {
-                echo "Deploy to Kubernetes logic here..."
+                script {
+                    echo "Deploying to Kubernetes..."
+                    // Copy kubeconfig to agent
+                    withCredentials([file(credentialsId: "${KUBE_CONFIG_CREDENTIALS}", variable: 'KUBECONFIG_FILE')]) {
+                        sh """
+                            export KUBECONFIG=$KUBECONFIG_FILE
+                            kubectl set image deployment/flask-app flask-app=${DOCKER_IMAGE}:${DOCKER_TAG} --record
+                            kubectl rollout status deployment/flask-app
+                        """
+                    }
+                }
             }
         }
     }
