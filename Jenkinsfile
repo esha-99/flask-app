@@ -1,5 +1,8 @@
 pipeline {
     agent any
+    tools {
+        sonarScanner 'sonar-scanner'
+    }
 
     environment {
         DOCKER_IMAGE = 'eshashamraiz2004/flask-app'
@@ -21,7 +24,7 @@ pipeline {
             steps {
                 withSonarQubeEnv("${SONARQUBE_ENV}") {
                     sh '''
-                        sonar-scanner \
+                        ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
                         -Dsonar.projectKey=flask-app \
                         -Dsonar.sources=. \
                         -Dsonar.host.url=http://localhost:9000
