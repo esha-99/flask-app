@@ -66,8 +66,8 @@ pipeline {
         always {
             echo "Cleaning up: stopping and removing container, cleaning workspace..."
             sh """
-                docker rm -f flask-app || true
-                docker rmi ${DOCKER_IMAGE}:${DOCKER_TAG} || true
+                //docker rm -f flask-app || true
+                //docker rmi ${DOCKER_IMAGE}:${DOCKER_TAG} || true
             """
             cleanWs()
         }
