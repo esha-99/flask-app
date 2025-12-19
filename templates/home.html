@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+  {% if user %}
+    <h1>Welcome, {{ user }}!</h1>
+    <div class="success">✅ You are logged in.</div>
+    <p>Security controls are enabled (CSRF, headers, parameterized SQL, output encoding).</p>
+  {% else %}
+    <h1>Home</h1>
+    <div class="info">You are not logged in.</div>
+    <p>Try logging in, searching, commenting, or echo.</p>
+    <p class="footer-note"><b>Test credentials:</b> admin/admin123, user1/password123, test/test</p>
+  {% endif %}
+{% endblock %}

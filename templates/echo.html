@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h1>Echo</h1>
+  <p class="info">Reflected XSS fixed via output encoding.</p>
+  <p>You said: <code>{{ txt }}</code></p>
+  <form method="GET" action="/echo">
+    <div>Text: <input type="text" name="text" value="{{ txt }}"></div>
+    <button type="submit">Echo</button>
+  </form>
+{% endblock %}

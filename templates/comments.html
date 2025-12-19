@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h1>Comments</h1>
+  <p class="info">Stored XSS fixed by escaping user-controlled content before storing/rendering.</p>
+  <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    <div>Comment: <textarea name="comment" rows="3"></textarea></div>
+    <button type="submit">Post</button>
+  </form>
+  <h3>All Comments</h3>
+  <ul>
+    {% if comments %}
+      {% for u,c in comments %}
+        <li><b>{{ u }}</b>: {{ c }}</li>
+      {% endfor %}
+    {% else %}
+      <li>No comments yet.</li>
+    {% endif %}
+  </ul>
+{% endblock %}

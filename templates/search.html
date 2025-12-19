@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h1>Search Products</h1>
+  <form method="GET" action="/search">
+    <div>Query: <input type="text" name="q" value="{{ q }}"></div>
+    <button type="submit">Search</button>
+  </form>
+  {% if q %}
+    <h3>Results for "{{ q }}":</h3>
+    {% if results %}
+      <ul>
+        {% for id, name, price in results %}
+          <li>{{ name }} - ${{ price }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="info">No results.</div>
+    {% endif %}
+  {% endif %}
+  <p class="info"><b>Secured:</b> parameterized SQL + output encoding.</p>
+{% endblock %}

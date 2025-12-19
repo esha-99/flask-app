@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h1>Login</h1>
+  {% if error %}
+    <div class="error">❌ Invalid username or password</div>
+  {% endif %}
+  <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    <div>Username: <input type="text" name="username" autocomplete="username"></div>
+    <div>Password: <input type="password" name="password" autocomplete="current-password"></div>
+    <button type="submit">Login</button>
+  </form>
+  <p class="info"><b>Note:</b> This demo uses a basic in-memory rate limiter.</p>
+{% endblock %}
