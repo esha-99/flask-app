@@ -5,7 +5,7 @@ pipeline {
         DOCKER_IMAGE = 'eshashamraiz2004/flask-app'
         DOCKER_TAG = "${BUILD_NUMBER}"
         DOCKER_CREDENTIALS = 'dockerhub-credentials'
-        SONARQUBE_ENV = 'sonarqube'
+        SONARQUBE_ENV = 'SonarQube'
     }
 
     stages {
