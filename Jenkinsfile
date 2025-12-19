@@ -21,6 +21,7 @@ pipeline {
                 script {
                     echo "Building Docker image ${DOCKER_IMAGE}:${DOCKER_TAG}..."
                     docker run -d --name flask-app -p 5001:5000 ${DOCKER_IMAGE}:${DOCKER_TAG}
+
                 }
             }
         }
