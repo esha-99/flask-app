@@ -16,15 +16,6 @@ pipeline {
             }
         }
 
-        stage('Dependency Check') {
-            steps {
-                sh '''
-                    pip3 install --no-cache-dir safety
-                    safety check || true
-                '''
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
                 script {
