@@ -1,14 +1,15 @@
 pipeline {
     agent any
+
     tools {
         sonarScanner 'sonar-scanner'
     }
 
     environment {
-        DOCKER_IMAGE = 'eshashamraiz2004/flask-app'
-        DOCKER_TAG = "${BUILD_NUMBER}"
-        DOCKER_CREDENTIALS = 'dockerhub-credentials'
-        SONARQUBE_ENV = 'SonarQube'
+        DOCKER_IMAGE        = 'eshashamraiz2004/flask-app'
+        DOCKER_TAG          = "${BUILD_NUMBER}"
+        DOCKER_CREDENTIALS  = 'dockerhub-credentials'
+        SONARQUBE_ENV       = 'SonarQube'
     }
 
     stages {
@@ -25,7 +26,7 @@ pipeline {
                 withSonarQubeEnv("${SONARQUBE_ENV}") {
                     sh '''
                         ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
-                        -Dsonar.projectKey=flask-app \
+                        -Dsonar.projectKey=esha-flask-app \
                         -Dsonar.sources=. \
                         -Dsonar.host.url=http://localhost:9000
                     '''
@@ -35,8 +36,12 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
+                withCredentials([
+                    string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')
+                ]) {
+                    timeout(time: 5, unit: 'MINUTES') {
+                        waitForQualityGate abortPipeline: true
+                    }
                 }
             }
         }
@@ -44,7 +49,7 @@ pipeline {
         stage('Dependency Check') {
             steps {
                 sh '''
-                    pip3 install safety
+                    pip3 install --no-cache-dir safety
                     safety check || true
                 '''
             }
@@ -62,7 +67,8 @@ pipeline {
         stage('Container Scan - Trivy') {
             steps {
                 sh '''
-                    trivy image --severity HIGH,CRITICAL \
+                    trivy image \
+                    --severity HIGH,CRITICAL \
                     ${DOCKER_IMAGE}:${DOCKER_TAG} || true
                 '''
             }
@@ -71,7 +77,10 @@ pipeline {
         stage('Push to DockerHub') {
             steps {
                 script {
-                    docker.withRegistry('https://registry.hub.docker.com', DOCKER_CREDENTIALS) {
+                    docker.withRegistry(
+                        'https://registry.hub.docker.com',
+                        DOCKER_CREDENTIALS
+                    ) {
                         dockerImage.push("${DOCKER_TAG}")
                         dockerImage.push("latest")
                     }
