@@ -46,7 +46,7 @@ pipeline {
             steps {
                 echo "Run OWASP ZAP CLI scan pointing to http://<EC2_PUBLIC_IP>:${APP_PORT}"
                 // Example (adjust according to your ZAP CLI command):
-                // sh "zap-cli quick-scan --self-contained --start-options '-config api.disablekey=true' http://<EC2_PUBLIC_IP>:${APP_PORT}"
+                sh "zap-cli quick-scan --self-contained --start-options '-config api.disablekey=true' http://18.216.252.43 :${APP_PORT}"
             }
         }
 
@@ -66,8 +66,8 @@ pipeline {
         always {
             echo "Cleaning up: stopping and removing container, cleaning workspace..."
             sh """
-                //docker rm -f flask-app || true
-                //docker rmi ${DOCKER_IMAGE}:${DOCKER_TAG} || true
+                docker rm -f flask-app || true
+                docker rmi ${DOCKER_IMAGE}:${DOCKER_TAG} || true
             """
             cleanWs()
         }
