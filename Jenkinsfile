@@ -4,7 +4,9 @@ pipeline {
     environment {
         DOCKER_IMAGE = "eshashamraiz2004/flask-app"
         DOCKER_TAG   = "${BUILD_NUMBER}"
-        DOCKERHUB_CREDENTIALS = 'dockerhub-credentials' // Replace with your Jenkins DockerHub credentials ID
+        DOCKERHUB_CREDENTIALS = 'dockerhub-credentials' // Jenkins DockerHub credentials ID
+        SONARQUBE_SERVER = 'SonarQube' // Jenkins SonarQube server ID (set in Jenkins configuration)
+        SONAR_TOKEN = credentials('sonar-token') // Add your SonarQube token as Jenkins credential
     }
 
     stages {
@@ -12,6 +14,21 @@ pipeline {
             steps {
                 echo "Checking out code from Git..."
                 checkout scm
+            }
+        }
+
+        stage('SonarQube Scan') {
+            steps {
+                script {
+                    echo "Running SonarQube scan..."
+                    sh """
+                        sonar-scanner \
+                        -Dsonar.projectKey=flask-app \
+                        -Dsonar.sources=. \
+                        -Dsonar.host.url=http://18.216.252.43:9000 \
+                        -Dsonar.login=${SONAR_TOKEN}
+                    """
+                }
             }
         }
 
