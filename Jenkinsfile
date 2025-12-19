@@ -4,8 +4,8 @@ pipeline {
     environment {
         DOCKER_IMAGE = "eshashamraiz2004/flask-app"
         DOCKER_TAG   = "${BUILD_NUMBER}"
-        DOCKERHUB_CREDENTIALS = 'dockerhub-credentials' // Jenkins DockerHub credentials ID
-        APP_PORT = "5001" // External port on EC2
+        DOCKERHUB_CREDENTIALS = 'dockerhub-credentials'
+        APP_PORT = "5001"
     }
 
     stages {
@@ -37,18 +37,16 @@ pipeline {
 
         stage('Wait for App to Start') {
             steps {
-                script {
-                    echo "Waiting 10 seconds for Flask app to start..."
-                    sh "sleep 10"
-                }
+                echo "Waiting 10 seconds for Flask app to start..."
+                sh "sleep 10"
             }
         }
 
-        stage('OWASP ZAP Ready for Scan') {
+        stage('OWASP ZAP Scan') {
             steps {
-                script {
-                    echo "App should now be accessible at http://<EC2_PUBLIC_IP>:${APP_PORT} for OWASP ZAP scan."
-                }
+                echo "Run OWASP ZAP CLI scan pointing to http://<EC2_PUBLIC_IP>:${APP_PORT}"
+                // Example (adjust according to your ZAP CLI command):
+                // sh "zap-cli quick-scan --self-contained --start-options '-config api.disablekey=true' http://<EC2_PUBLIC_IP>:${APP_PORT}"
             }
         }
 
@@ -81,3 +79,4 @@ pipeline {
         }
     }
 }
+
