@@ -2,23 +2,23 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE       = 'eshashamraiz2004/flask-app'
-        DOCKER_TAG         = "${BUILD_NUMBER}"
-        DOCKER_CREDENTIALS = 'dockerhub-credentials'
+        DOCKER_IMAGE = "eshashamraiz2004/flask-app"
+        DOCKER_TAG   = "${BUILD_NUMBER}"
+        DOCKERHUB_CREDENTIALS = 'dockerhub-credentials' // Replace with your Jenkins DockerHub credentials ID
     }
 
     stages {
-
-        stage('Checkout') {
+        stage('Checkout SCM') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/esha-99/flask-app.git'
+                echo "Checking out code from Git..."
+                checkout scm
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
+                    echo "Building Docker image ${DOCKER_IMAGE}:${DOCKER_TAG}..."
                     sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
                 }
             }
@@ -26,36 +26,30 @@ pipeline {
 
         stage('Container Scan - Trivy') {
             steps {
-                sh '''
-                    trivy image \
-                    --severity HIGH,CRITICAL \
-                    ${DOCKER_IMAGE}:${DOCKER_TAG} || true
-                '''
+                script {
+                    echo "Scanning Docker image with Trivy..."
+                    sh "trivy image --severity HIGH,CRITICAL ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                }
             }
         }
 
         stage('Push to DockerHub') {
             steps {
                 script {
-                    docker.withRegistry(
-                        'https://registry.hub.docker.com',
-                        DOCKER_CREDENTIALS
-                    ) {
-                        dockerImage.push("${DOCKER_TAG}")
-                        dockerImage.push("latest")
+                    echo "Logging in and pushing image to DockerHub..."
+                    withDockerRegistry([credentialsId: "${DOCKERHUB_CREDENTIALS}", url: ""]) {
+                        sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
                     }
                 }
             }
         }
 
         stage('Deploy to Kubernetes') {
+            when {
+                expression { false } // Skipped for now
+            }
             steps {
-                sh '''
-                    kubectl apply -f k8s/namespace.yaml
-                    kubectl apply -f k8s/deployment.yaml
-                    kubectl apply -f k8s/service.yaml
-                    kubectl rollout status deployment/flask-app -n flask-app
-                '''
+                echo "Deploy to Kubernetes logic here..."
             }
         }
     }
@@ -65,10 +59,10 @@ pipeline {
             cleanWs()
         }
         success {
-            echo '✅ Pipeline executed successfully!'
+            echo "✅ Pipeline completed successfully!"
         }
         failure {
-            echo '❌ Pipeline failed!'
+            echo "❌ Pipeline failed!"
         }
     }
 }
