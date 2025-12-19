@@ -5,7 +5,6 @@ pipeline {
         DOCKER_IMAGE = "eshashamraiz2004/flask-app"
         DOCKER_TAG   = "${BUILD_NUMBER}"
         DOCKERHUB_CREDENTIALS = 'dockerhub-credentials' // Jenkins DockerHub credentials ID
-        KUBE_CONFIG_CREDENTIALS = 'kubeconfig-credentials' // Add your kubeconfig as Jenkins secret file
     }
 
     stages {
@@ -49,14 +48,11 @@ pipeline {
             steps {
                 script {
                     echo "Deploying to Kubernetes..."
-                    // Copy kubeconfig to agent
-                    withCredentials([file(credentialsId: "${KUBE_CONFIG_CREDENTIALS}", variable: 'KUBECONFIG_FILE')]) {
-                        sh """
-                            export KUBECONFIG=$KUBECONFIG_FILE
-                            kubectl set image deployment/flask-app flask-app=${DOCKER_IMAGE}:${DOCKER_TAG} --record
-                            kubectl rollout status deployment/flask-app
-                        """
-                    }
+                    // Assumes kubectl is configured on the agent with access to the cluster
+                    sh """
+                        kubectl set image deployment/flask-app flask-app=${DOCKER_IMAGE}:${DOCKER_TAG} --record
+                        kubectl rollout status deployment/flask-app
+                    """
                 }
             }
         }
